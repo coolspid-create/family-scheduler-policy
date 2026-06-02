@@ -7,29 +7,44 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout main
         uses: actions/checkout@v4
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
         with:
-          path: .
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          path: source
+
+      - name: Checkout Pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Prepare Pages contents
+        run: |
+          find gh-pages -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp source/index.html gh-pages/
+          cp source/privacy.html gh-pages/
+          cp source/delete-account.html gh-pages/
+          cp source/.nojekyll gh-pages/
+
+      - name: Publish to gh-pages
+        run: |
+          cd gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No policy page changes to publish."
+          else
+            git commit -m "Deploy policy pages"
+            git push origin gh-pages
+          fi
