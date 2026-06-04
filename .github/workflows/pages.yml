@@ -34,6 +34,7 @@ jobs:
           cp source/index.html gh-pages/
           cp source/privacy.html gh-pages/
           cp source/delete-account.html gh-pages/
+          cp source/community-guidelines.html gh-pages/
           cp source/.nojekyll gh-pages/
 
       - name: Publish to gh-pages
